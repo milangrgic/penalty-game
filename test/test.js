@@ -266,5 +266,18 @@ describe("Test", function () {
       await community.connect(account1).approveTransfer(0);
       await expect(community.connect(account1).completeTransfer(0)).to.be.revertedWith("Only requesting member can complete transfer");
     });
+    
+    it("should be failed approve or complete with invalid request id", async function () {
+      const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
+
+      await community.addMember(account1.address);
+      await community.addMember(account2.address);
+      await token.transfer(account1.address, ethers.parseEther('100'));
+
+      await community.connect(account2).requestTransfer(account1.address, ethers.parseEther('1'));
+      await token.connect(account1).approve(community.target, ethers.parseEther('1'));
+      await expect(community.connect(account1).approveTransfer(1)).to.be.revertedWith("Invalid Request Id");
+      await expect(community.connect(account1).completeTransfer(1)).to.be.revertedWith("Invalid Request Id");
+    });
   });
 });

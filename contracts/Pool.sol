@@ -8,11 +8,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract PoolContract {
     
     // Address of the admin
-    address public admin;
+    address private admin;
     // Address of the ERC20 token
-    address public token;
+    address private token;
     // Address of the community contract
-    address public community;
+    address private community;
 
     // Constructor to initialize the contract with the token address
     constructor(address _token) {

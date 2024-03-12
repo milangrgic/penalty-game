@@ -28,11 +28,11 @@ contract CommunityContract {
     // Mapping to store whether an address is a member or not
     mapping(address => bool) public isMember;
     // Array to store the list of members
-    address[] public members;
+    address[] private members;
     // Array to store transfer requests
-    TransferRequest[] public transferRequests;
+    TransferRequest[] private transferRequests;
     // Counter for generating request IDs
-    uint256 public nextRequestId;
+    uint256 private nextRequestId;
 
     // Modifier to restrict access to only the admin
     modifier onlyAdmin() {
@@ -92,6 +92,7 @@ contract CommunityContract {
 
     // Function to approve a transfer request
     function approveTransfer(uint256 _requestId) external {
+        require(_requestId >= 0 && _requestId < nextRequestId, "Invalid Request Id");
         TransferRequest storage request = transferRequests[_requestId];
         require(!request.approved, "Transfer request already approved");
         if (request.to == pool) {
@@ -107,6 +108,7 @@ contract CommunityContract {
 
     // Function to complete a transfer
     function completeTransfer(uint256 _requestId) external {
+        require(_requestId >= 0 && _requestId < nextRequestId, "Invalid Request Id");
         TransferRequest storage request = transferRequests[_requestId];
         require(request.approved, "Transfer request not approved");
         require(!request.completed, "Transfer request already completed");
