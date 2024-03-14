@@ -14,6 +14,19 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_community",
+        "type": "address"
+      }
+    ],
+    "name": "setCommunity",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "to",
         "type": "address"
       },
@@ -23,20 +36,7 @@
         "type": "uint256"
       }
     ],
-    "name": "approveToken",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_community",
-        "type": "address"
-      }
-    ],
-    "name": "setCommunity",
+    "name": "transferToken",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

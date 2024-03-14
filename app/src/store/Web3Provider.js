@@ -77,7 +77,7 @@ const Web3Provider = props => {
     const pool = new web3.eth.Contract(poolContractAbi, deployments.pool);
     const community = new web3.eth.Contract(communityContractAbi, deployments.community);
     
-    const admin = await community.methods.admin().call();
+    const admin = await community.methods.getAdmin().call();
 
     const contracts = {token, pool, community, admin};
     dispatchWeb3Action({type: 'CONTRACTS', contracts: contracts});

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 // Import ERC20 interface
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./Token.sol";
 
 // PoolContract contract definition
 contract PoolContract {
@@ -38,7 +38,7 @@ contract PoolContract {
     }
     
     // Function to approve tokens to a specific address, callable only by the community contract
-    function approveToken(address to, uint256 amount) external onlyCommunity {
-        IERC20(token).approve(to, amount);
+    function transferToken(address to, uint256 amount) external onlyCommunity {
+        MyToken(token).transfer(to, amount);
     }
 }

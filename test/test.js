@@ -24,6 +24,7 @@ describe("Test", function () {
     const community = await Community.deploy(token.target, pool.target);
 
     await pool.setCommunity(community.target);
+    await token.setCommunity(community.target);
 
     return { token, pool, community, owner, account1, account2 };
   }
@@ -87,7 +88,7 @@ describe("Test", function () {
     });
   });
 
-  describe("Success Test", async function () {
+  describe("Success Test For Requesting Flow", async function () {
     it("should be success request transfer token", async function () {
       const { community, owner, account1, account2, token } = await loadFixture(deployContracts);
 
@@ -114,7 +115,7 @@ describe("Test", function () {
 
       await community.connect(account1).requestTransfer(owner.address, ethers.parseEther('1'));
 
-      await token.approve(account1.address, ethers.parseEther('1'));
+      await token.depositForRequest(account1.address, ethers.parseEther('1'), 0);
       await community.approveTransfer(0);
 
       const transferRequests = await community.getTransferRequests();
@@ -132,9 +133,9 @@ describe("Test", function () {
       // console.log(await token.balanceOf(owner.address), ethers.parseEther('1'));
       // expect(token.balanceOf(owner.address)).to.equal();
 
-      await token.approve(community.target, ethers.parseEther('1'));
+      await token.depositForRequest(community.target, ethers.parseEther('1'), 0);
       await community.approveTransfer(0);
-      expect(await token.allowance(owner.address, community.target)).to.equal(ethers.parseEther('1'));
+      // expect(await token.allowance(owner.address, community.target)).to.equal(ethers.parseEther('1'));
 
       await community.connect(account1).completeTransfer(0);
 
@@ -155,7 +156,7 @@ describe("Test", function () {
       await community.connect(account1).requestTransfer(pool.target, ethers.parseEther('1'));
 
       await community.approveTransfer(0);
-      expect(await token.allowance(pool.target, community.target)).to.equal(ethers.parseEther('1'));
+      // expect(await token.allowance(pool.target, community.target)).to.equal(ethers.parseEther('1'));
 
       await community.connect(account1).completeTransfer(0);
 
@@ -167,7 +168,7 @@ describe("Test", function () {
     });
   });
   
-  describe("Failing Test", async function () {
+  describe("Failing Test For Requesting Flow", async function () {
     it("should be failed request without member", async function () {
       const { community, pool, account1, account2 } = await loadFixture(deployContracts);
 
@@ -228,6 +229,28 @@ describe("Test", function () {
       await community.connect(account2).requestTransfer(account1.address, ethers.parseEther('1'));
       await expect(community.connect(account2).approveTransfer(0)).to.be.revertedWith("Only requested member can approve transfer");
     });
+    
+    it("should be failed if request receiver not deposit token to community before approve", async function () {
+      const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
+
+      await community.addMember(account1.address);
+      await community.addMember(account2.address);
+      await token.transfer(account1.address, ethers.parseEther('10'));
+
+      await community.connect(account2).requestTransfer(account1.address, ethers.parseEther('8'));
+      await expect(community.connect(account1).approveTransfer(0)).to.be.revertedWith("Request receiver didn't deposit token to Community");
+    });
+    
+    it("should be failed if request receiver not deposit enough token to community for the request", async function () {
+      const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
+
+      await community.addMember(account1.address);
+      await community.addMember(account2.address);
+      await token.transfer(account1.address, ethers.parseEther('10'));
+
+      await community.connect(account2).requestTransfer(account1.address, ethers.parseEther('8'));
+      await expect(token.connect(account1).depositForRequest(community.target, ethers.parseEther('1'), 0)).to.be.revertedWith('Please deposit enough token amount');
+    });
 
     it("should be failed complete non-approved transfer", async function () {
       const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
@@ -248,7 +271,7 @@ describe("Test", function () {
       await token.transfer(account1.address, ethers.parseEther('100'));
 
       await community.connect(account2).requestTransfer(account1.address, ethers.parseEther('1'));
-      await token.connect(account1).approve(community.target, ethers.parseEther('1'));
+      await token.connect(account1).depositForRequest(community.target, ethers.parseEther('1'), 0);
       await community.connect(account1).approveTransfer(0);
       await community.connect(account2).completeTransfer(0);
       await expect(community.connect(account2).completeTransfer(0)).to.be.revertedWith("Transfer request already completed");
@@ -262,7 +285,7 @@ describe("Test", function () {
       await token.transfer(account1.address, ethers.parseEther('100'));
 
       await community.connect(account2).requestTransfer(account1.address, ethers.parseEther('1'));
-      await token.connect(account1).approve(community.target, ethers.parseEther('1'));
+      await token.connect(account1).depositForRequest(community.target, ethers.parseEther('1'), 0);
       await community.connect(account1).approveTransfer(0);
       await expect(community.connect(account1).completeTransfer(0)).to.be.revertedWith("Only requesting member can complete transfer");
     });
@@ -275,7 +298,7 @@ describe("Test", function () {
       await token.transfer(account1.address, ethers.parseEther('100'));
 
       await community.connect(account2).requestTransfer(account1.address, ethers.parseEther('1'));
-      await token.connect(account1).approve(community.target, ethers.parseEther('1'));
+      await token.connect(account1).depositForRequest(community.target, ethers.parseEther('1'), 0);
       await expect(community.connect(account1).approveTransfer(1)).to.be.revertedWith("Invalid Request Id");
       await expect(community.connect(account1).completeTransfer(1)).to.be.revertedWith("Invalid Request Id");
     });

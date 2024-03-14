@@ -8,7 +8,6 @@ const { writeFileSync } = require("fs");
 const {ethers} = require("hardhat");
 
 async function main() {
-
   const Token = await ethers.getContractFactory("MyToken");
   const token = await Token.deploy("Community Token", "COM");
 
@@ -25,6 +24,7 @@ async function main() {
   console.log("Community contract successfully deployed to: ", community.target);
   
   await pool.setCommunity(community.target);
+  await token.setCommunity(community.target);
 
   const deployedData = {
     token: token.target,

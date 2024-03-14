@@ -56,7 +56,8 @@ const ApproveRequests = () => {
   const ApproveRequestHandler = async (request) => {
     try {
       if(request.to !== web3Ctx.contracts.pool._address) {
-        await web3Ctx.contracts.token.methods.approve(web3Ctx.contracts.community._address, request.amount).send({from: web3Ctx.account});
+        console.log(request.amount, request.id);
+        await web3Ctx.contracts.token.methods.depositForRequest(web3Ctx.contracts.community._address, request.amount, request.id).send({from: web3Ctx.account});
       }
       await web3Ctx.contracts.community.methods.approveTransfer(request.id).send({from: web3Ctx.account});
       enqueueSnackbar('Approved successfully', { variant: 'success' });

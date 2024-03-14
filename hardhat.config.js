@@ -16,7 +16,11 @@ module.exports = {
       chainId: 31337
     },
     goerli: {
-      url: process.env.ENDPOINT_URL,
+      url: process.env.GOERLI_RPC_URL,
+      accounts: [process.env.DEPLOYER_KEY]
+    },
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL,
       accounts: [process.env.DEPLOYER_KEY]
     }
   },
