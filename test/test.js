@@ -29,15 +29,15 @@ describe("Test", function () {
     return { token, pool, community, owner, account1, account2 };
   }
 
-  describe("Deployment", async function () {
-    it("should be the correct token name", async function () {
+  describe("Deployment Test", async function () {
+    it("Community token name should be same as we set after deploy token contract.", async function () {
       const { token } = await loadFixture(deployContracts);
       expect(await token.name()).to.equal("Community Token");
     });
   });
 
-  describe("Member Management", async function () {
-    it("should be 2 member after deploy contract", async function () {
+  describe("Member Management Test", async function () {
+    it("Only 2 members should be in the members list after deploy community contract.", async function () {
       const { community, owner, pool } = await loadFixture(deployContracts);
       const members = await community.getMembers();
       expect(members.length).to.equal(2);
@@ -45,18 +45,18 @@ describe("Test", function () {
       expect(members[1]).to.equal(pool.target);
     });
 
-    it("should be failed when add exist member", async function () {
+    it("Add member should be failed if it already exists.", async function () {
       const { community, owner, account1 } = await loadFixture(deployContracts);
       await community.addMember(account1.address);
       await expect(community.addMember(account1.address)).to.be.revertedWith("Member already exists");
     });
 
-    it("should be failed when call add member function without admin", async function () {
+    it("Add member function should be called by admin, if else should failed.", async function () {
       const { community, owner, account1 } = await loadFixture(deployContracts);
       await expect(community.connect(account1).addMember(account1.address)).to.be.revertedWith("Only admin can perform this action");
     });
 
-    it("should be success add member function", async function () {
+    it("New member should be in the members list if Add member function call success.", async function () {
       const { community, owner, account1 } = await loadFixture(deployContracts);
       await community.addMember(account1.address);
 
@@ -66,18 +66,18 @@ describe("Test", function () {
       expect(await community.isMember(account1.address)).to.equal(true);
     });
     
-    it("should be failed when remove doesn't exist member", async function () {
+    it("Remove non-existing member should be failed.", async function () {
       const { community, account1 } = await loadFixture(deployContracts);
       await expect(community.removeMember(account1.address)).to.be.revertedWith("Member does not exist");
     });
     
-    it("should be failed when try to remove admin or pool", async function () {
+    it("Remove admin or pool address from members list should be failed.", async function () {
       const { community, owner, pool } = await loadFixture(deployContracts);
       await expect(community.removeMember(owner.address)).to.be.revertedWith("Can't remove admin or pool");
       await expect(community.removeMember(pool.target)).to.be.revertedWith("Can't remove admin or pool");
     });
     
-    it("should be success remove member function", async function () {
+    it("Removed member should not be in the list after Remove Member function call success.", async function () {
       const { community, owner, account1, account2 } = await loadFixture(deployContracts);
       await community.addMember(account1.address);
       await community.addMember(account2.address);
@@ -89,15 +89,13 @@ describe("Test", function () {
   });
 
   describe("Success Test For Requesting Flow", async function () {
-    it("should be success request transfer token", async function () {
+    it("Requested transfer parameters in the transferRequests list list should be correct after Request transfer function call success", async function () {
       const { community, owner, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
       await community.addMember(account2.address);
 
       await community.connect(account1).requestTransfer(owner.address, ethers.parseEther('1'));
-      // console.log(await token.balanceOf(owner.address), ethers.parseEther('1'));
-      // expect(token.balanceOf(owner.address)).to.equal();
       const transferRequests = await community.getTransferRequests();
       expect(transferRequests.length).to.equal(1);
       expect(transferRequests[0][0]).to.equal(account1.address);
@@ -107,7 +105,7 @@ describe("Test", function () {
       expect(transferRequests[0][4]).to.equal(false);
     });
     
-    it("should be success approve the request transfer token", async function () {
+    it("Requested transfer token should be deposited to the escrow contract and also approved parameter should be true after approve transfer success.", async function () {
       const { community, owner, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -120,22 +118,19 @@ describe("Test", function () {
 
       const transferRequests = await community.getTransferRequests();
       expect(transferRequests.length).to.equal(1);
-      expect(transferRequests[0][3]).to.equal(true);
+      expect(transferRequests[0][3]).to.equal(true); // approved parameter for transfer request
     });
     
-    it("should be success complete the requested transfer token", async function () {
+    it("Requested token should be sent to requester and also completed parameter should be true after approve and complete request", async function () {
       const { community, owner, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
       await community.addMember(account2.address);
 
       await community.connect(account1).requestTransfer(owner.address, ethers.parseEther('1'));
-      // console.log(await token.balanceOf(owner.address), ethers.parseEther('1'));
-      // expect(token.balanceOf(owner.address)).to.equal();
 
       await token.depositForRequest(community.target, ethers.parseEther('1'), 0);
       await community.approveTransfer(0);
-      // expect(await token.allowance(owner.address, community.target)).to.equal(ethers.parseEther('1'));
 
       await community.connect(account1).completeTransfer(0);
 
@@ -143,10 +138,10 @@ describe("Test", function () {
 
       const transferRequests = await community.getTransferRequests();
       expect(transferRequests.length).to.equal(1);
-      expect(transferRequests[0][4]).to.equal(true);
+      expect(transferRequests[0][4]).to.equal(true); // completed parameter for transfer request
     });
     
-    it("should be success to check request to pool", async function () {
+    it("Requested token should be sent to requester from pool after approve and complete transfer by admin from pool.", async function () {
       const { community, owner, account1, account2, token, pool } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -156,7 +151,6 @@ describe("Test", function () {
       await community.connect(account1).requestTransfer(pool.target, ethers.parseEther('1'));
 
       await community.approveTransfer(0);
-      // expect(await token.allowance(pool.target, community.target)).to.equal(ethers.parseEther('1'));
 
       await community.connect(account1).completeTransfer(0);
 
@@ -164,12 +158,12 @@ describe("Test", function () {
 
       const transferRequests = await community.getTransferRequests();
       expect(transferRequests.length).to.equal(1);
-      expect(transferRequests[0][4]).to.equal(true);
+      expect(transferRequests[0][4]).to.equal(true); // completed parameter for transfer request
     });
   });
   
   describe("Failing Test For Requesting Flow", async function () {
-    it("should be failed request without member", async function () {
+    it("Should be failed for the request from non-existing member", async function () {
       const { community, pool, account1, account2 } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -178,7 +172,7 @@ describe("Test", function () {
         .to.be.revertedWith("Sender is not a member");
     });
     
-    it("should be failed request to non-member", async function () {
+    it("Should be failed for the request to non-existing member", async function () {
       const { community, pool, account1, account2 } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -187,7 +181,7 @@ describe("Test", function () {
         .to.be.revertedWith("Recipient is not a member");
     });
     
-    it("should be failed request to an account that has insufficient balance", async function () {
+    it("Should be failed for the request to an account that has insufficient balance.", async function () {
       const { community, pool, account1, account2 } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -197,7 +191,7 @@ describe("Test", function () {
         .to.be.revertedWith("Insufficient balance");
     });
     
-    it("should be failed approve already approved request", async function () {
+    it("Should be failed approve for the already approved request.", async function () {
       const { community, pool, account1, token } = await loadFixture(deployContracts);
 
       await token.transfer(pool.target, ethers.parseEther('100'));
@@ -209,7 +203,7 @@ describe("Test", function () {
       await expect(community.approveTransfer(0)).to.be.revertedWith("Transfer request already approved");
     });
     
-    it("should be failed approve a request that requested to pool without admin", async function () {
+    it("Should be failed approve for the request that requested to pool from non-admin.", async function () {
       const { community, pool, account1, token } = await loadFixture(deployContracts);
 
       await token.transfer(pool.target, ethers.parseEther('100'));
@@ -219,7 +213,7 @@ describe("Test", function () {
       await expect(community.connect(account1).approveTransfer(0)).to.be.revertedWith("Only admin can approve transfer");
     });
 
-    it("should be failed approve without requested member", async function () {
+    it("Should be failed approve by non-requested member.", async function () {
       const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -230,7 +224,7 @@ describe("Test", function () {
       await expect(community.connect(account2).approveTransfer(0)).to.be.revertedWith("Only requested member can approve transfer");
     });
     
-    it("should be failed if request receiver not deposit token to community before approve", async function () {
+    it("Should be failed approve if requested receiver did not deposit token to escrow contract before approve.", async function () {
       const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -241,7 +235,7 @@ describe("Test", function () {
       await expect(community.connect(account1).approveTransfer(0)).to.be.revertedWith("Request receiver didn't deposit token to Community");
     });
     
-    it("should be failed if request receiver not deposit enough token to community for the request", async function () {
+    it("Should be failed approve if requested receiver did not deposit enough token to escrow contract for the request before approve.", async function () {
       const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -252,7 +246,7 @@ describe("Test", function () {
       await expect(token.connect(account1).depositForRequest(community.target, ethers.parseEther('1'), 0)).to.be.revertedWith('Please deposit enough token amount');
     });
 
-    it("should be failed complete non-approved transfer", async function () {
+    it("Should be failed complete for the non-approved request.", async function () {
       const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -263,7 +257,7 @@ describe("Test", function () {
       await expect(community.connect(account2).completeTransfer(0)).to.be.revertedWith("Transfer request not approved");
     });
 
-    it("should be failed complete already completed request", async function () {
+    it("Should be failed complete for the already completed request.", async function () {
       const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -277,7 +271,7 @@ describe("Test", function () {
       await expect(community.connect(account2).completeTransfer(0)).to.be.revertedWith("Transfer request already completed");
     });
     
-    it("should be failed complete already completed request", async function () {
+    it("Should be failed complete if non-requester tried to complete request.", async function () {
       const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
@@ -290,7 +284,7 @@ describe("Test", function () {
       await expect(community.connect(account1).completeTransfer(0)).to.be.revertedWith("Only requesting member can complete transfer");
     });
     
-    it("should be failed approve or complete with invalid request id", async function () {
+    it("Should be failed approve or complete for the function call with invalid request id.", async function () {
       const { community, pool, account1, account2, token } = await loadFixture(deployContracts);
 
       await community.addMember(account1.address);
